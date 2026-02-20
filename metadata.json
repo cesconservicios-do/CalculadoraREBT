@@ -1,0 +1,5 @@
+{
+  "name": "REBT Interactive Tech Tool",
+  "description": "Una aplicación técnica e interactiva diseñada para el estudio y aplicación del Reglamento Electrotécnico para Baja Tensión (REBT) de España, incluyendo calculadoras de sección, guías de dotación y esquemas de enlace normativos.",
+  "requestFramePermissions": []
+}
