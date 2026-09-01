@@ -1,0 +1,487 @@
+{
+  "project": "REBT Pro — Herramienta Técnica Electricista",
+  "version": "2.0",
+  "target": "Claude Code Desktop",
+  "language": "es",
+
+  "context": {
+    "description": "Aplicación web React + TypeScript + Vite para electricistas profesionales en España. Herramienta de apoyo a decisiones en campo: normativa REBT, calculadora de secciones, guía de estancias, esquemas unifilares y generador de presupuestos con asistente IA (Gemini API gratuita). El proyecto original fue generado con Google AI Studio. Claude Code debe auditarlo, corregir errores, y añadir los nuevos módulos.",
+    "stack": {
+      "framework": "React 18 + TypeScript + Vite 6",
+      "styling": "Tailwind CSS (via CDN en index.html)",
+      "icons": "lucide-react@0.244.0",
+      "ai": "Gemini API (Google) — gratuita — variable GEMINI_API_KEY en .env.local",
+      "pdf": "Instalar @react-pdf/renderer o usar window.print() — elegir la más sencilla",
+      "deployment": "Vercel (ya configurado)"
+    },
+    "existing_files": [
+      "App.tsx",
+      "types.ts",
+      "constants.tsx",
+      "index.html",
+      "index.tsx",
+      "vite.config.ts",
+      "package.json",
+      "components/InstallationScheme.tsx",
+      "components/DICalculator.tsx",
+      "components/RoomGuide.tsx",
+      "components/SafetyReference.tsx"
+    ]
+  },
+
+  "phase_1_audit": {
+    "title": "FASE 1 — Auditoría y corrección del código existente",
+    "description": "Antes de añadir nada nuevo, Claude Code debe revisar y corregir el proyecto actual.",
+    "tasks": [
+      {
+        "id": "A1",
+        "task": "Revisar package.json y dependencias",
+        "checks": [
+          "Versiones compatibles entre sí (React 18, Vite 6, TypeScript 5.8)",
+          "Añadir tailwindcss como devDependency si no está (actualmente se carga por CDN en index.html, evaluar si migrar a instalación local para mejor rendimiento)",
+          "Añadir @google/generative-ai para Gemini API",
+          "Verificar que lucide-react@0.244.0 no tenga conflictos con React 18"
+        ]
+      },
+      {
+        "id": "A2",
+        "task": "Revisar types.ts",
+        "checks": [
+          "Verificar que todos los tipos exportados sean usados correctamente en los componentes",
+          "Añadir tipos nuevos necesarios: BudgetItem, BudgetData, UnifilarConfig, CircuitSelection",
+          "Corregir cualquier tipo implícito 'any'"
+        ]
+      },
+      {
+        "id": "A3",
+        "task": "Revisar constants.tsx",
+        "checks": [
+          "CONDUCTIVITY: valores Cu/XLPE=44, Cu/PVC=48, Al/XLPE=28, Al/PVC=30 — verificar contra ITC-BT-19 tabla 1",
+          "CABLE_SECTIONS actual empieza en 6mm² pero la calculadora DI debería también poder calcular circuitos interiores (1.5, 2.5, 4mm²). Añadir secciones pequeñas al array separado INTERIOR_SECTIONS = [1.5, 2.5, 4, 6, 10, 16, 25]",
+          "ALL_CIRCUITS: verificar que C1-C13 coincidan exactamente con ITC-BT-25 tabla 1 y 2 (electrificación básica y elevada)",
+          "ROOM_GUIDE: los datos de cocina, baño y habitación deben coincidir con ITC-BT-25. Añadir estancias: Garaje, Exterior, Local Comercial",
+          "INSTALLATION_LINK: verificar que la secuencia RED→ACOM→CGP→LGA→CC→DI→CGMP sea correcta según ITC-BT-12 a 17"
+        ]
+      },
+      {
+        "id": "A4",
+        "task": "Revisar DICalculator.tsx",
+        "checks": [
+          "La fórmula de caída de tensión monofásica es: ΔV = (2 × L × P) / (γ × S × V) — verificar que el factor 2 se aplica correctamente",
+          "La fórmula trifásica es: ΔV = (L × P) / (γ × S × V) — verificar",
+          "Los límites de caída de tensión según ITC-BT-15: 1% para DI con contadores centralizados, 0.5% para DI parcial, 1.5% para DI con contador individual — verificar que coincida con el código actual",
+          "El fusible de seguridad se calcula como I = P / (V × √3 para trifásica, V para monofásica) — verificar la fórmula actual",
+          "Verificar que la nomenclatura CPR sea correcta: XLPE=RZ1-K(AS) 0.6/1kV, PVC=H07V-K",
+          "El límite para la DI según ITC-BT-15 es: conductores de Cu mínimo 6mm², Al mínimo 16mm² — verificar que el filtro en filteredSections sea correcto",
+          "Añadir validación: si la sección máxima disponible no cumple el límite de caída, mostrar error claro"
+        ]
+      },
+      {
+        "id": "A5",
+        "task": "Revisar RoomGuide.tsx",
+        "checks": [
+          "El botón 'Generar Esquema Pro' actualmente abre un modal con SVG estático — este modal se reemplazará por el nuevo componente UnifilarPro",
+          "Verificar que la tabla de dotación mínima por estancia coincida con ITC-BT-25",
+          "El selector de circuitos para el unifilar debe integrarse con el nuevo componente"
+        ]
+      },
+      {
+        "id": "A6",
+        "task": "Revisar SafetyReference.tsx",
+        "checks": [
+          "Códigos IP: verificar que IP4X para canalizaciones residenciales y IPX4 para zonas húmedas sean correctos según IEC 60529",
+          "Código IK: verificar IK08 mínimo para CGP según ITC-BT-13",
+          "Alturas reglamentarias: verificar contra ITC-BT-25 (contadores 0.70-1.80m, CGMP 1.40-2.00m)",
+          "Añadir sección de Volúmenes de baño (Zona 0, 1, 2) con IPX requerido por zona — crítico para seguridad"
+        ]
+      },
+      {
+        "id": "A7",
+        "task": "Revisar App.tsx y routing",
+        "checks": [
+          "Verificar que el sistema de tabs funcione sin errores en mobile",
+          "El header debe ser responsive — en mobile el nav de tabs debe colapsar o hacer scroll horizontal",
+          "Añadir tab nuevo: 'Presupuesto' con icono FileText",
+          "Añadir tab nuevo: 'Protecciones' con icono Shield (calculadora de IDs y magnetotérmicos)"
+        ]
+      },
+      {
+        "id": "A8",
+        "task": "Revisar vite.config.ts",
+        "checks": [
+          "Verificar que el alias '@' apunte correctamente a la raíz del proyecto",
+          "La variable GEMINI_API_KEY debe exponerse correctamente via import.meta.env.VITE_GEMINI_API_KEY — NOTA: Vite requiere prefijo VITE_ para variables de entorno del cliente. El código actual usa process.env.GEMINI_API_KEY que puede no funcionar correctamente. Corregir el vite.config.ts y actualizar el .env.local a VITE_GEMINI_API_KEY=TU_CLAVE"
+        ]
+      }
+    ]
+  },
+
+  "phase_2_new_modules": {
+    "title": "FASE 2 — Nuevos módulos a desarrollar",
+    "modules": [
+
+      {
+        "id": "M1",
+        "name": "ProtectionCalculator (Calculadora de Protecciones)",
+        "file": "components/ProtectionCalculator.tsx",
+        "description": "Calculadora de magnetotérmicos (PIAs) e interruptores diferenciales (IDs) para cuadros eléctricos residenciales y comerciales. Complementa la calculadora DI existente.",
+        "normativa": ["ITC-BT-22", "ITC-BT-23", "ITC-BT-25"],
+        "features": [
+          {
+            "name": "Selector de circuito",
+            "detail": "El usuario selecciona el circuito (C1-C13 de ITC-BT-25) o introduce datos manuales. Al seleccionar, se precargan automáticamente los valores normativos."
+          },
+          {
+            "name": "Cálculo de PIA (magnetotérmico)",
+            "detail": "Fórmula: I_nominal = P / (V × cos_phi). Curva: B para alumbrado e instalaciones domésticas, C para motores y arranques frecuentes, D para cargas muy inductivas. El PIA debe cumplir: I_carga ≤ I_PIA ≤ I_admisible_cable. Mostrar el calibre normalizado inmediatamente superior: 6A, 10A, 16A, 20A, 25A, 32A, 40A, 50A, 63A."
+          },
+          {
+            "name": "Cálculo de Diferencial (ID)",
+            "detail": "Sensibilidad: 30mA para protección personal (obligatorio en viviendas ITC-BT-25), 300mA para protección contra incendios. Clase A (recomendado, detecta corrientes pulsantes y continuas) vs Clase AC (solo alterna). Intensidad nominal ID debe ser ≥ suma de PIAs del grupo. Opciones: 25A, 40A, 63A, 80A, 100A."
+          },
+          {
+            "name": "Coordinación PIA-ID",
+            "detail": "Verificar que el poder de corte del PIA (4.5kA mínimo en viviendas, 6kA en locales) sea adecuado. Verificar que la curva del PIA coordine con el ID (el PIA debe disparar antes que el ID en cortocircuito). Mostrar advertencia si hay riesgo de disparo indeseado del diferencial."
+          },
+          {
+            "name": "Resumen del cuadro",
+            "detail": "Tabla resumen con todos los circuitos configurados: ID grupo, PIA, sección cable, carga asignada, % uso. Alerta visual si algún circuito supera el 80% de capacidad."
+          }
+        ],
+        "ui": {
+          "layout": "Panel izquierdo: configuración. Panel derecho: resultados con semáforo verde/amarillo/rojo",
+          "responsive": "En mobile: apilado vertical",
+          "colors": "Verde=cumple, Amarillo=al límite (>80%), Rojo=no cumple"
+        }
+      },
+
+      {
+        "id": "M2",
+        "name": "UnifilarPro (Graficador de Esquemas Unifilares)",
+        "file": "components/UnifilarPro.tsx",
+        "description": "Generador de esquemas unifilares para cuadros eléctricos de viviendas y locales comerciales. El esquema se dibuja con SVG puro, es interactivo y se puede imprimir/exportar.",
+        "normativa": ["ITC-BT-17", "ITC-BT-25", "UNE-EN 60617"],
+        "features": [
+          {
+            "name": "Configuración del cuadro",
+            "fields": [
+              "Referencia del proyecto (texto libre)",
+              "Tipo: Vivienda / Local comercial",
+              "Electrificación: Básica (≤5.750W) / Elevada (≤9.200W)",
+              "IGA principal: 25A / 40A / 63A (con curva C)",
+              "Número de diferenciales: 1 (simple) o 2 (división de cargas por grupos)",
+              "Incluir PCS (protector contra sobretensiones): Sí/No"
+            ]
+          },
+          {
+            "name": "Selección de circuitos",
+            "detail": "Grid de pills/chips con todos los circuitos disponibles (C1-C13 según electrificación). El usuario activa/desactiva circuitos. Los circuitos básicos (C1-C5) vienen preseleccionados para vivienda básica. Cada chip muestra: ID, nombre, amperaje. Al activar electrificación elevada aparecen C6-C13."
+          },
+          {
+            "name": "Esquema SVG generado",
+            "detail": "El SVG debe dibujarse respetando simbología eléctrica simplificada (no UNE estricta, sino la práctica habitual en España): IGA como rectángulo con símbolo de interruptor, Diferencial como rectángulo con toroide, PIA como rectángulo con curva B/C/D, líneas de conexión con barras colectoras. Cada PIA muestra: ID circuito, amperaje, sección de cable (ej: 2×1,5+1,5), diámetro de tubo (ej: ∅16mm), marcas de conductores (///). El esquema debe caber en A4 apaisado para impresión. Si hay más de 8 circuitos, escalar automáticamente o dividir en dos columnas."
+          },
+          {
+            "name": "Cajetín técnico",
+            "detail": "En la parte inferior del SVG: nombre del instalador (tomado de los datos del módulo Presupuesto si están rellenos), número de instalador autorizado, referencia proyecto, normativa (ITC-BT-25), tipo de cable (Cu H07Z1-K AS libre de halógenos), fecha. Diseño de cajetín profesional tipo plano técnico."
+          },
+          {
+            "name": "Exportar / Imprimir",
+            "detail": "Botón 'Imprimir': usa window.print() con @media print que oculta la interfaz y solo muestra el SVG a tamaño A4. Botón 'Descargar SVG': convierte el SVG a blob y descarga como archivo .svg. Botón 'Copiar imagen': usa canvas para convertir SVG a PNG y copiar al portapapeles."
+          }
+        ],
+        "technical_notes": [
+          "El SVG debe tener viewBox='0 0 1122 794' (A4 apaisado en 96dpi)",
+          "Usar solo colores: negro (#1e293b) para líneas, azul (#1d4ed8) para IGA, violeta (#7c3aed) para ID, verde oscuro (#0f766e) para PIAs, naranja (#b45309) para PCS",
+          "Texto mínimo 9px para legibilidad en impresión",
+          "No usar librerías externas para el SVG — todo con React SVG nativo",
+          "El SVG debe ser completamente estático (no animaciones) para que funcione bien en impresión"
+        ]
+      },
+
+      {
+        "id": "M3",
+        "name": "BudgetModule (Módulo de Presupuestos)",
+        "file": "components/BudgetModule.tsx",
+        "description": "Generador de presupuestos base para presentar al cliente. Nivel intermedio: partidas por trabajo (no unitario), con asistente IA (Gemini) que sugiere partidas según el tipo de obra. Genera vista previa profesional y permite imprimir/compartir.",
+        "features": [
+          {
+            "name": "Formulario datos del instalador",
+            "detail": "Campos: Nombre empresa o autónomo, NIF/CIF, Número de instalador autorizado (ej: A-12345-ESP), Dirección, Teléfono, Email. Estos datos se guardan en localStorage para no tener que rellenarlos cada vez. Añadir botón 'Guardar mis datos'."
+          },
+          {
+            "name": "Formulario datos del cliente",
+            "detail": "Campos: Nombre o empresa, NIF/CIF (opcional), Dirección de la obra, Teléfono, Email. Campos opcionales para no bloquear el flujo rápido en obra."
+          },
+          {
+            "name": "Cabecera del presupuesto",
+            "detail": "Campos: Número de presupuesto (autogenerado: PRE-YYYY-NNN, incrementado automáticamente), Fecha (hoy por defecto), Validez en días (30 por defecto), Tipo de instalación (select: Instalación eléctrica vivienda / Local comercial / Reforma cuadro eléctrico / Instalación fotovoltaica / Mantenimiento y averías / Instalación industrial / Otro), IVA (select: 21% General / 10% Reducido obras vivienda habitual / 0% Exento)."
+          },
+          {
+            "name": "Partidas del presupuesto",
+            "detail": "Cada partida tiene: Descripción del trabajo (textarea, no input, para que quepa texto largo), Unidades (número, default 1), Precio unitario (€, número). La lista de partidas es dinámica: añadir, eliminar, reordenar. Subtotal por partida calculado automáticamente. Totales: Base imponible, IVA, Total final. Formato español: separador decimal coma, separador miles punto (ej: 1.250,00 €)."
+          },
+          {
+            "name": "Asistente IA con Gemini (función sugerirPartidas)",
+            "detail": "Botón 'Sugerir partidas con IA' que llama a Gemini API. El prompt a enviar: 'Eres un electricista profesional español con 20 años de experiencia. Para una {tipo_instalacion} en {descripcion_adicional}, sugiere entre 5 y 8 partidas de presupuesto habituales en España. Cada partida debe ser un trabajo o conjunto de materiales+mano de obra, NO precios unitarios. Responde SOLO con un array JSON con objetos {descripcion: string, unidades: number, precioOrientativo: number}. Los precios deben ser orientativos reales del mercado español 2024-2025. No incluyas texto adicional.' Parsear la respuesta JSON y añadir las partidas al formulario. El usuario puede editarlas libremente antes de usar. Mostrar spinner durante la llamada. Si falla, mostrar error claro con opción de reintentar."
+          },
+          {
+            "name": "Partidas predefinidas (sin IA)",
+            "detail": "Si el usuario no quiere usar IA o no tiene clave, mostrar botón 'Plantilla rápida' con partidas predefinidas por tipo de instalación. Plantillas: VIVIENDA=[Desmontaje y retirada instalación existente, Cuadro eléctrico con protecciones REBT, Cableado y canalizaciones empotradas, Mecanismos (interruptores y bases), Puntos de luz, Toma de tierra, Pruebas verificaciones y documentación]. LOCAL=[Proyecto técnico e ingeniería, Cuadro general de protección, Circuitos de fuerza y alumbrado, Canalizaciones en bandeja o tubo, Cuadro de distribución secundario, Alumbrado de emergencia, Puesta a tierra y equipotencialidad, Certificado instalación REBT]."
+          },
+          {
+            "name": "Condiciones y observaciones",
+            "detail": "Textarea para texto libre. Texto por defecto: 'Los precios incluyen materiales y mano de obra especificados. Trabajos adicionales fuera del alcance definido se presupuestarán aparte. Garantía de mano de obra: 2 años. Los materiales cumplen la normativa REBT vigente.'"
+          },
+          {
+            "name": "Vista previa del presupuesto",
+            "detail": "Tab separado que muestra el presupuesto formateado como documento profesional: cabecera con logo/nombre instalador, datos cliente, tabla de partidas, totales, condiciones, pie con número de instalador y REBT. Diseño limpio, imprimible, en blanco."
+          },
+          {
+            "name": "Acciones del presupuesto",
+            "detail": "Botón 'Imprimir / Guardar PDF': window.print() con CSS @media print optimizado para A4. Botón 'Enviar WhatsApp': genera mensaje de texto con resumen del presupuesto y abre wa.me. Botón 'Nuevo presupuesto': limpia el formulario pero mantiene datos del instalador. Botón 'Duplicar': copia el presupuesto actual para reutilizarlo."
+          },
+          {
+            "name": "Persistencia",
+            "detail": "Guardar el último presupuesto en localStorage para recuperarlo si se recarga la página. Los datos del instalador persisten siempre en localStorage. El contador de número de presupuesto persiste en localStorage."
+          }
+        ]
+      }
+    ]
+  },
+
+  "phase_3_ux_improvements": {
+    "title": "FASE 3 — Mejoras de UX y responsive",
+    "tasks": [
+      {
+        "id": "U1",
+        "task": "Responsive total",
+        "detail": "La app debe funcionar perfectamente en móvil (mínimo 320px) y tablet. En mobile: el nav superior hace scroll horizontal si los tabs no caben. Las tablas se convierten en cards. Las grids de 2 columnas colapsan a 1. Los inputs tienen tamaño mínimo 16px para no hacer zoom en iOS. El SVG del unifilar tiene scroll horizontal en mobile. El módulo de presupuesto funciona completo en mobile."
+      },
+      {
+        "id": "U2",
+        "task": "Modo campo (field mode)",
+        "detail": "Botón 'Modo Campo' en el header (icono sol/lupa). Al activarlo: aumenta tamaño de fuente base a 18px, aumenta contraste, agranda todos los botones e inputs para uso con guantes. El resultado principal de la calculadora (sección en mm²) se muestra a 120px. Se desactiva pulsando el mismo botón. El estado se guarda en localStorage."
+      },
+      {
+        "id": "U3",
+        "task": "Últimos cálculos",
+        "detail": "En la calculadora DI, guardar los últimos 5 cálculos en localStorage. Mostrar un botón 'Historial' que despliega un panel lateral con los últimos cálculos. Cada cálculo muestra: fecha, potencia, longitud, material, resultado (sección). Permitir cargar cualquier cálculo anterior."
+      },
+      {
+        "id": "U4",
+        "task": "Navegación y UX general",
+        "detail": "Añadir indicador visual en el tab activo. En mobile, el header se reduce (solo logo + tabs, sin subtítulo). Al cambiar de tab hacer scroll al top. Añadir transición suave entre tabs (ya existe tab-content-enter, verificar que funcione). El footer solo visible en desktop."
+      },
+      {
+        "id": "U5",
+        "task": "Manejo de errores global",
+        "detail": "Añadir ErrorBoundary global en App.tsx que capture errores de componentes y muestre mensaje amigable en lugar de pantalla en blanco. Todos los fetch/llamadas API deben tener try/catch con mensajes de error claros. Las llamadas a Gemini deben tener timeout de 15 segundos."
+      }
+    ]
+  },
+
+  "phase_4_normativa_compliance": {
+    "title": "FASE 4 — Cumplimiento estricto REBT España",
+    "critical_verifications": [
+      {
+        "itc": "ITC-BT-10",
+        "description": "Previsión de cargas. Verificar que NORMALIZED_POWERS_MONO y NORMALIZED_POWERS_TRI coincidan con la tabla de ITC-BT-10: Básica 5.750W, Elevada 9.200W para vivienda. Locales: 100W/m² mínimo."
+      },
+      {
+        "itc": "ITC-BT-15",
+        "description": "Derivaciones individuales. Los límites de caída de tensión son: 1% cuando la alimentación al conjunto de contadores se hace desde el cuadro de medida (LGA), 0.5% cuando la DI es la única instalación entre el CPM y el CGMP. IMPORTANTE: el código actual tiene estos valores pero revisar que se apliquen correctamente según la tipología seleccionada."
+      },
+      {
+        "itc": "ITC-BT-19",
+        "description": "Instalaciones interiores. Conductividad del cobre: 56 m/Ω·mm² a 20°C. Con corrección de temperatura: XLPE a 90°C → γ=44, PVC a 70°C → γ=48. Para aluminio: XLPE→γ=28, PVC→γ=30. Estos valores deben estar en CONDUCTIVITY."
+      },
+      {
+        "itc": "ITC-BT-22",
+        "description": "Protección contra sobreintensidades. El PIA debe cumplir: I_B ≤ I_n ≤ I_Z donde I_B=corriente de diseño, I_n=nominal del PIA, I_Z=corriente admisible del cable. La condición I_2 ≤ 1.45×I_Z debe verificarse (I_2=corriente de fusión convencional)."
+      },
+      {
+        "itc": "ITC-BT-23",
+        "description": "Protección contra sobretensiones. El PCS (protector contra sobretensiones) es obligatorio en instalaciones nuevas según modificación de 2021. Nivel de protección: 2.5kV para tensiones de red ≤230/400V. Añadir esta información en la app."
+      },
+      {
+        "itc": "ITC-BT-24",
+        "description": "Protección contra contactos indirectos. El diferencial de 30mA es obligatorio en todos los circuitos de viviendas. En locales: protección por diferencial o por separación de circuitos. Añadir nota informativa."
+      },
+      {
+        "itc": "ITC-BT-25",
+        "description": "Dotación mínima por estancia. Verificar y completar la tabla: Acceso/Pasillo: 1 base cada 5m. Salón/Comedor: mín 3 bases (con contadores ≥6 bases elevada). Dormitorio principal: mín 3 bases. Dormitorios: mín 2 bases. Cocina: ver circuitos C3/C4/C5. Baño: 1 base junto al lavabo (fuera de volúmenes). Garaje individual: 1 base 16A. Terraza: 1 base."
+      },
+      {
+        "itc": "ITC-BT-33",
+        "description": "Instalaciones provisionales de obra. Si el tipo de instalación es 'provisional de obra', mostrar los requisitos específicos: cuadro normalizado ICP + diferencial 30mA, tomas de corriente con tapa de protección."
+      }
+    ]
+  },
+
+  "implementation_instructions": {
+    "title": "Instrucciones de implementación para Claude Code",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Crear un directorio nuevo limpio o trabajar sobre el proyecto existente descomprimido",
+        "detail": "Primero ejecutar: npm install. Verificar que npm run dev funciona sin errores."
+      },
+      {
+        "step": 2,
+        "action": "Ejecutar la Fase 1 completa (auditoría)",
+        "detail": "Revisar cada archivo según las tareas A1-A8. Hacer todos los cambios necesarios. Verificar que npm run dev sigue funcionando después de cada cambio."
+      },
+      {
+        "step": 3,
+        "action": "Actualizar types.ts con los tipos nuevos",
+        "detail": "Añadir: BudgetItem {id, description, units, unitPrice}, BudgetData {installerData, clientData, headerData, items, conditions}, UnifilarConfig {projectRef, tipo, electrification, igaAmpere, numDiferenciales, hasPCS, selectedCircuits}, ProtectionResult {circuitId, recommendedPIA, recommendedPIACurve, recommendedID, isCoordinated, warnings}"
+      },
+      {
+        "step": 4,
+        "action": "Actualizar constants.tsx",
+        "detail": "Añadir INTERIOR_SECTIONS, completar ROOM_GUIDE con estancias adicionales, añadir BUDGET_TEMPLATES con partidas predefinidas por tipo de obra, añadir NORMALIZED_CALIBRES_PIA=[6,10,16,20,25,32,40,50,63]"
+      },
+      {
+        "step": 5,
+        "action": "Crear services/geminiService.ts",
+        "detail": "Encapsular toda la lógica de llamada a Gemini API en un servicio separado. Exportar: suggestBudgetItems(tipo: string, descripcion: string): Promise<BudgetItem[]>. Manejar errores, timeout 15s, parseo de JSON con try/catch. Usar import.meta.env.VITE_GEMINI_API_KEY."
+      },
+      {
+        "step": 6,
+        "action": "Crear componente ProtectionCalculator.tsx",
+        "detail": "Implementar según especificación M1."
+      },
+      {
+        "step": 7,
+        "action": "Crear componente UnifilarPro.tsx",
+        "detail": "Implementar según especificación M2. El SVG debe ser completamente funcional sin librerías externas. Probar impresión en A4."
+      },
+      {
+        "step": 8,
+        "action": "Crear componente BudgetModule.tsx",
+        "detail": "Implementar según especificación M3. El asistente IA de Gemini es una función adicional — la app debe funcionar perfectamente sin él."
+      },
+      {
+        "step": 9,
+        "action": "Actualizar App.tsx",
+        "detail": "Añadir los dos tabs nuevos (Protecciones, Presupuesto). Implementar modo campo (U2). Añadir ErrorBoundary. Ajustar responsive del header."
+      },
+      {
+        "step": 10,
+        "action": "Implementar mejoras UX (Fase 3)",
+        "detail": "Implementar U1-U5 en orden."
+      },
+      {
+        "step": 11,
+        "action": "Verificación final",
+        "checks": [
+          "npm run build debe completar sin errores ni warnings de TypeScript",
+          "npm run preview debe mostrar la app completa",
+          "Probar en mobile (Chrome DevTools, viewport 375px)",
+          "Probar impresión del unifilar y presupuesto",
+          "Verificar que la calculadora DI da resultados correctos con casos de prueba conocidos",
+          "Verificar que los datos del instalador persisten en localStorage"
+        ]
+      }
+    ]
+  },
+
+  "test_cases": {
+    "title": "Casos de prueba para verificar la calculadora DI",
+    "cases": [
+      {
+        "description": "DI monofásica 5.750W (electrificación básica), Cu/XLPE, 25m, contadores centralizados",
+        "expected": "Sección 6mm², ΔV ≈ 0.58V (≈0.25%), límite 1% → CUMPLE"
+      },
+      {
+        "description": "DI monofásica 9.200W (elevada), Cu/XLPE, 50m, contadores centralizados",
+        "expected": "Sección 10mm², verificar que ΔV ≤ 2.3V (1% de 230V)"
+      },
+      {
+        "description": "DI trifásica 17.321W, Cu/XLPE, 30m, contadores centralizados",
+        "expected": "Sección 6mm², ΔV < 4V (1% de 400V)"
+      }
+    ]
+  },
+
+  "file_structure_final": {
+    "title": "Estructura de archivos final esperada",
+    "tree": [
+      "src/ (o raíz del proyecto)",
+      "  App.tsx                    — navegación principal + ErrorBoundary + modo campo",
+      "  types.ts                   — todos los tipos TypeScript",
+      "  constants.tsx              — todos los datos normativos REBT",
+      "  index.tsx                  — punto de entrada React",
+      "  index.html                 — HTML base con Tailwind CDN",
+      "  vite.config.ts             — configuración Vite corregida",
+      "  package.json               — dependencias actualizadas",
+      "  .env.local                 — VITE_GEMINI_API_KEY=tu_clave_aqui",
+      "  components/",
+      "    InstallationScheme.tsx   — esquema de enlace (existente, auditado)",
+      "    DICalculator.tsx         — calculadora DI (existente, corregida)",
+      "    RoomGuide.tsx            — guía de estancias (existente, integrada con UnifilarPro)",
+      "    SafetyReference.tsx      — referencia de seguridad (existente, ampliada)",
+      "    ProtectionCalculator.tsx — NUEVO: calculadora de protecciones IDs y PIAs",
+      "    UnifilarPro.tsx          — NUEVO: graficador de unifilares SVG",
+      "    BudgetModule.tsx         — NUEVO: generador de presupuestos con IA",
+      "  services/",
+      "    geminiService.ts         — NUEVO: servicio Gemini API encapsulado"
+    ]
+  },
+
+  "design_requirements": {
+    "title": "Requisitos de diseño",
+    "palette": {
+      "background": "#0f172a (slate-950)",
+      "surface": "#1e293b (slate-900)",
+      "accent": "#f97316 (orange-500)",
+      "accent_secondary": "#3b82f6 (blue-500)",
+      "text_primary": "#f1f5f9 (slate-100)",
+      "text_secondary": "#94a3b8 (slate-400)",
+      "success": "#22c55e (green-500)",
+      "error": "#ef4444 (red-500)",
+      "warning": "#f59e0b (amber-500)"
+    },
+    "typography": {
+      "primary": "Inter (ya cargada)",
+      "monospace": "Roboto Mono (ya cargada, clase font-mono-tech)",
+      "min_size_mobile": "16px en inputs para evitar zoom iOS",
+      "headings": "font-black italic uppercase (estilo existente a mantener)"
+    },
+    "components": {
+      "cards": "bg-slate-900 border border-slate-800 rounded-2xl o rounded-3xl",
+      "buttons_primary": "bg-orange-500 text-white hover:bg-orange-400",
+      "buttons_secondary": "bg-slate-800 text-slate-200 hover:bg-slate-700",
+      "inputs": "bg-slate-950 border border-slate-700 text-white focus:border-orange-500",
+      "tabs_active": "bg-orange-500 text-white",
+      "tabs_inactive": "text-slate-500 hover:text-slate-300"
+    },
+    "animations": {
+      "tab_transition": "tab-content-enter (fadeIn 0.3s, ya definido)",
+      "note": "Mantener animaciones existentes, no añadir más para no afectar rendimiento mobile"
+    }
+  },
+
+  "gemini_api_setup": {
+    "title": "Configuración Gemini API",
+    "model": "gemini-1.5-flash (gratuito, rápido)",
+    "endpoint": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+    "env_variable": "VITE_GEMINI_API_KEY",
+    "env_file": ".env.local",
+    "env_content": "VITE_GEMINI_API_KEY=TU_CLAVE_GEMINI_AQUI",
+    "get_key_url": "https://aistudio.google.com/app/apikey",
+    "package": "@google/generative-ai",
+    "usage_in_app": "import.meta.env.VITE_GEMINI_API_KEY",
+    "important_note": "La app debe funcionar perfectamente sin la clave API. Si VITE_GEMINI_API_KEY está vacía o es PLACEHOLDER, el botón 'Sugerir con IA' debe estar desactivado con tooltip: 'Configura tu clave Gemini en .env.local para usar el asistente IA'. Nunca lanzar error que rompa la app."
+  },
+
+  "final_notes": {
+    "priority": "La corrección de errores existentes (Fase 1) tiene prioridad absoluta sobre los módulos nuevos (Fase 2). Un proyecto sin errores con 4 módulos es mejor que un proyecto con errores con 7 módulos.",
+    "testing": "Después de cada fase, ejecutar npm run build para verificar que no hay errores TypeScript. Corregir cualquier error antes de continuar.",
+    "git": "Hacer commit después de cada fase con mensaje descriptivo.",
+    "vercel": "El proyecto ya está configurado para Vercel. Recordar añadir VITE_GEMINI_API_KEY en las variables de entorno de Vercel (Settings → Environment Variables).",
+    "locale": "La app es para uso en España. Todos los textos en español. Formato de números en español (coma decimal, punto miles). Normativa REBT española.",
+    "accessibility": "Añadir atributos aria-label en botones sin texto visible. El contraste de colores debe ser mínimo 4.5:1 (WCAG AA)."
+  }
+}
