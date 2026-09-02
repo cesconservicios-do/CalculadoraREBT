@@ -13,7 +13,7 @@ interface VercelResponse {
   json(body: unknown): void;
 }
 
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-3.6-flash';
 const REQUEST_TIMEOUT_MS = 15000;
 const MAX_DESCRIPTION_LENGTH = 300;
 
