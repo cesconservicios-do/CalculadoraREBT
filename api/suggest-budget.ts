@@ -13,7 +13,10 @@ interface VercelResponse {
   json(body: unknown): void;
 }
 
-const MODEL_NAME = 'gemini-3.6-flash';
+// Alias estable de Google que siempre apunta al modelo "flash" vigente,
+// en vez de fijar una versión concreta que Google puede deprecar sin aviso
+// (así fue como "gemini-1.5-flash" dejó de funcionar).
+const MODEL_NAME = 'gemini-flash-latest';
 const REQUEST_TIMEOUT_MS = 15000;
 const MAX_DESCRIPTION_LENGTH = 300;
 
