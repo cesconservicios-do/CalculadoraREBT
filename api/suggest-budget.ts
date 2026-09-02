@@ -13,10 +13,13 @@ interface VercelResponse {
   json(body: unknown): void;
 }
 
-// Alias estable de Google que siempre apunta al modelo "flash" vigente,
-// en vez de fijar una versión concreta que Google puede deprecar sin aviso
-// (así fue como "gemini-1.5-flash" dejó de funcionar).
-const MODEL_NAME = 'gemini-flash-latest';
+// Alias estable de Google (evita fijar una versión concreta que Google puede
+// deprecar sin aviso, como pasó con "gemini-1.5-flash"). Se usa la variante
+// "lite": para esta clave "gemini-flash-latest" devolvía 503 por alta
+// demanda de forma sostenida (15/15 intentos fallidos en prueba real);
+// "lite" respondió 200 en 5/5 pruebas y es más que suficiente para generar
+// una lista corta de partidas de presupuesto.
+const MODEL_NAME = 'gemini-flash-lite-latest';
 const REQUEST_TIMEOUT_MS = 15000;
 const MAX_DESCRIPTION_LENGTH = 300;
 
